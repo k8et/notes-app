@@ -1,2 +1,71 @@
 @import "tailwindcss";
 @import "@mantine/core/styles.css";
+
+
+[data-mantine-color-scheme="dark"] ::selection {
+  background: #3b82f6;
+  color: #fff;
+}
+
+[data-mantine-color-scheme="dark"] ::-moz-selection {
+  background: #3b82f6;
+  color: #fff;
+}
+
+[data-mantine-color-scheme="dark"] .ce-inline-toolbar,
+[data-mantine-color-scheme="dark"] .ce-conversion-toolbar,
+[data-mantine-color-scheme="dark"] .ce-settings,
+[data-mantine-color-scheme="dark"] .ce-toolbar__plus,
+[data-mantine-color-scheme="dark"] .ce-toolbar__settings-btn {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+  color: #fff !important;
+}
+
+.ce-header {
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  color: inherit;
+}
+
+.ce-header[data-level="1"],
+h1.ce-header {
+  font-size: 2.5em !important;
+  font-weight: 700 !important;
+}
+
+.ce-header[data-level="2"],
+h2.ce-header {
+  font-size: 2em !important;
+  font-weight: 700 !important;
+}
+
+.ce-header[data-level="3"],
+h3.ce-header {
+  font-size: 1.75em !important;
+  font-weight: 600 !important;
+}
+
+.ce-header[data-level="4"],
+h4.ce-header {
+  font-size: 1.5em !important;
+  font-weight: 600 !important;
+}
+
+.ce-header[data-level="5"],
+h5.ce-header {
+  font-size: 1.25em !important;
+  font-weight: 600 !important;
+}
+
+.ce-header[data-level="6"],
+h6.ce-header {
+  font-size: 1.1em !important;
+  font-weight: 600 !important;
+}
+
+[data-mantine-color-scheme="dark"] .ce-header {
+  color: #fff !important;
+}

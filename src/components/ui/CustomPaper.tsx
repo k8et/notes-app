@@ -5,6 +5,7 @@ import { forwardRef } from 'react';
 
 export interface CustomPaperProps extends PaperProps {
     children: React.ReactNode;
+    onClick?: () => void;
 }
 
 export const CustomPaper = forwardRef<HTMLDivElement, CustomPaperProps>(

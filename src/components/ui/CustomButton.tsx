@@ -6,6 +6,7 @@ import { forwardRef } from 'react';
 export interface CustomButtonProps extends ButtonProps {
     children: React.ReactNode;
     type?: 'button' | 'submit' | 'reset';
+    onClick?: () => void;
 }
 
 export const CustomButton = forwardRef<HTMLButtonElement, CustomButtonProps>(
