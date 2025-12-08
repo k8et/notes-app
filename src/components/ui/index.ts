@@ -39,3 +39,12 @@ export type { TwitterButtonProps } from './TwitterButton';
 
 export { ThemeToggle } from './ThemeToggle';
 
+export { CustomTextarea } from './CustomTextarea';
+export type { CustomTextareaProps } from './CustomTextarea';
+
+export { CustomModal } from './CustomModal';
+export type { CustomModalProps } from './CustomModal';
+
+export { CustomActionIcon } from './CustomActionIcon';
+export type { CustomActionIconProps } from './CustomActionIcon';
+
