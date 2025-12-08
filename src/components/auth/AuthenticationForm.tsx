@@ -199,7 +199,7 @@ export function AuthenticationForm({ initialType = 'login', ...props }: Authenti
                     </CustomStack>
 
                     <CustomGroup justify="space-between" mt="xl">
-                        <CustomAnchor component="button" type="button" c="dimmed" onClick={() => toggle()} size="xs">
+                        <CustomAnchor component="button" c="dimmed" onClick={() => toggle()} size="xs">
                             {type === 'register'
                                 ? 'Already have an account? Login'
                                 : "Don't have an account? Register"}
