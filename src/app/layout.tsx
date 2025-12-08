@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ColorSchemeScript } from "@mantine/core";
+import '@mantine/notifications/styles.css';
 import { MantineProvider } from "@/components/providers/MantineProvider";
+import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,7 +36,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <MantineProvider>
-          {children}
+          <AuthProviderWrapper>
+            {children}
+          </AuthProviderWrapper>
         </MantineProvider>
       </body>
     </html>
