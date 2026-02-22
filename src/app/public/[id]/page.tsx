@@ -1,6 +1,11 @@
 'use client';
 
-import { NoteEditor } from '@/components/notes';
+import dynamic from 'next/dynamic';
+
+const NoteEditor = dynamic(
+    () => import('@/components/notes').then((mod) => mod.NoteEditor),
+    { ssr: false }
+);
 import { CustomGroup, CustomTitle, ThemeToggle, CustomPaper, CustomText } from '@/components/ui';
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -33,7 +38,7 @@ export default function PublicNotePage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen p-4">
+            <div className="min-h-screen p-3 sm:p-4">
                 <div className="max-w-4xl mx-auto">
                     <div className="mb-8">
                         <Skeleton height={40} width="40%" radius="sm" mb="md" />
@@ -49,7 +54,7 @@ export default function PublicNotePage() {
 
     if (!note) {
         return (
-            <div className="min-h-screen p-4">
+            <div className="min-h-screen p-3 sm:p-4">
                 <div className="max-w-4xl mx-auto">
                     <CustomGroup justify="space-between" mb="xl">
                         <CustomTitle order={1}>Notepad</CustomTitle>
@@ -64,7 +69,7 @@ export default function PublicNotePage() {
     }
 
     return (
-        <div className="min-h-screen p-4">
+        <div className="min-h-screen p-3 sm:p-4">
             <div className="max-w-4xl mx-auto">
                 <CustomGroup justify="space-between" mb="xl">
                     <CustomTitle order={1}>Notepad</CustomTitle>

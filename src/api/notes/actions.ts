@@ -1,6 +1,34 @@
 import { supabase } from '@/lib/supabase';
 import { NOTES_TABLE } from './constants';
-import { Note, CreateNoteData, UpdateNoteData } from './types';
+import { Note, NoteListItem, CreateNoteData, UpdateNoteData } from './types';
+
+export async function getNotesList(folderId?: string | null): Promise<NoteListItem[]> {
+    try {
+        let query = supabase
+            .from(NOTES_TABLE)
+            .select('id, title, updated_at, is_public, folder_id')
+            .order('updated_at', { ascending: false });
+
+        if (folderId === undefined) {
+        } else if (folderId === null) {
+            query = query.is('folder_id', null);
+        } else {
+            query = query.eq('folder_id', folderId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Error fetching notes list:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching notes list:', error);
+        return [];
+    }
+}
 
 export async function getNote(id: string): Promise<Note | null> {
     try {
@@ -43,25 +71,6 @@ export async function getPublicNote(id: string): Promise<Note | null> {
     }
 }
 
-export async function getNotes(): Promise<Note[]> {
-    try {
-        const { data, error } = await supabase
-            .from(NOTES_TABLE)
-            .select('*')
-            .order('updated_at', { ascending: false });
-
-        if (error) {
-            console.error('Error fetching notes:', error);
-            return [];
-        }
-
-        return data || [];
-    } catch (error) {
-        console.error('Error fetching notes:', error);
-        return [];
-    }
-}
-
 export async function createNote(noteData: CreateNoteData): Promise<Note | null> {
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -77,6 +86,8 @@ export async function createNote(noteData: CreateNoteData): Promise<Note | null>
                 title: noteData.title,
                 content: noteData.content,
                 user_id: user.id,
+                ...(noteData.is_public !== undefined && { is_public: noteData.is_public }),
+                ...(noteData.folder_id !== undefined && { folder_id: noteData.folder_id }),
             })
             .select()
             .single();

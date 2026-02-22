@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @import "@mantine/core/styles.css";
 
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 
 [data-mantine-color-scheme="dark"] ::selection {
   background: #3b82f6;

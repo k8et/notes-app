@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   description: "Create, edit, and share your notes with a beautiful rich text editor",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

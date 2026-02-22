@@ -48,3 +48,5 @@ export type { CustomModalProps } from './CustomModal';
 export { CustomActionIcon } from './CustomActionIcon';
 export type { CustomActionIconProps } from './CustomActionIcon';
 
+export { BackButton } from './BackButton';
+

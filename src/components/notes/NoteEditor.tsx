@@ -14,7 +14,7 @@ export function NoteEditor({ initialData, onChange, readOnly = false }: NoteEdit
     return (
         <CustomPaper p="md" shadow="sm" withBorder>
             <CustomStack gap="md">
-                <div style={{ minHeight: '500px' }}>
+                <div className="min-h-[300px] sm:min-h-[500px]">
                     <Editor
                         data={initialData}
                         onChange={onChange}

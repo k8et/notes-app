@@ -1,111 +1,145 @@
 'use client';
 
-import { NoteEditor } from '@/components/notes';
-import { CustomGroup, CustomTitle, ThemeToggle, CustomCheckbox, CustomText } from '@/components/ui';
-import { useParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const NoteEditor = dynamic(
+    () => import('@/components/notes').then((mod) => mod.NoteEditor),
+    { ssr: false }
+);
+import { CustomGroup, CustomTitle, ThemeToggle, CustomCheckbox, CustomText, CustomTextInput, CustomStack, BackButton } from '@/components/ui';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { OutputData } from '@editorjs/editorjs';
 import { getNote, createNote, updateNote, type Note } from '@/api/notes';
-import { getTitleFromEditor } from '@/lib/editor';
+import { getFolders, type Folder } from '@/api/folders';
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomButton, CustomPaper } from '@/components/ui';
-import { Skeleton } from '@mantine/core';
-import { IconLink, IconLoader2 } from '@tabler/icons-react';
+import { Skeleton, Select } from '@mantine/core';
+import { IconLink, IconDeviceFloppy } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
 export default function NotePage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { signOut, user } = useAuth();
     const id = params.id as string;
-    const [initialData, setInitialData] = useState<OutputData>({ blocks: [] });
+    const [title, setTitle] = useState('');
+    const [initialContent, setInitialContent] = useState<OutputData>({ blocks: [] });
+    const contentRef = useRef<OutputData>({ blocks: [] });
     const [isLoading, setIsLoading] = useState(true);
     const [note, setNote] = useState<Note | null>(null);
+    const [folders, setFolders] = useState<Folder[]>([]);
+    const [folderId, setFolderId] = useState<string | null>(null);
     const [isPublic, setIsPublic] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const isNewNoteRef = useRef(id === 'new');
-    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const lastSavedDataRef = useRef<string>('');
+    const isNewNote = id === 'new';
+
+    useEffect(() => {
+        const loadFolders = async () => {
+            const list = await getFolders();
+            setFolders(list);
+        };
+        loadFolders();
+    }, []);
 
     useEffect(() => {
         const loadNote = async () => {
             if (id === 'new') {
-                setInitialData({ blocks: [] });
-                isNewNoteRef.current = true;
+                setTitle('');
+                const empty = { blocks: [] };
+                setInitialContent(empty);
+                contentRef.current = empty;
+                const f = searchParams.get('folder');
+                setFolderId(f || null);
                 setIsLoading(false);
             } else {
                 setIsLoading(true);
                 const loadedNote = await getNote(id);
                 if (loadedNote) {
                     setNote(loadedNote);
-                    setInitialData(loadedNote.content);
+                    setTitle(loadedNote.title || '');
+                    const loaded = loadedNote.content || { blocks: [] };
+                    setInitialContent(loaded);
+                    contentRef.current = loaded;
                     setIsPublic(loadedNote.is_public || false);
-                    lastSavedDataRef.current = JSON.stringify(loadedNote.content);
-                    isNewNoteRef.current = false;
+                    setFolderId(loadedNote.folder_id ?? null);
                 }
                 setIsLoading(false);
             }
         };
 
         loadNote();
-    }, [id]);
+    }, [id, searchParams]);
 
-    const handleChange = useCallback((data: OutputData) => {
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-        }
+    const handleEditorChange = useCallback((data: OutputData) => {
+        contentRef.current = data;
+    }, []);
 
-        const dataString = JSON.stringify(data);
-
-        // Skip save if data hasn't changed
-        if (dataString === lastSavedDataRef.current && !isNewNoteRef.current) {
-            return;
-        }
-
-        saveTimeoutRef.current = setTimeout(async () => {
-            // Double-check data hasn't changed during timeout
-            const currentDataString = JSON.stringify(data);
-            if (currentDataString === lastSavedDataRef.current && !isNewNoteRef.current) {
-                return;
-            }
-
-            setIsSaving(true);
-            const title = getTitleFromEditor(data) || 'Untitled';
-
-            try {
-                if (isNewNoteRef.current) {
-                    const newNote = await createNote({
-                        title,
-                        content: data,
-                        is_public: false,
+    const handleSave = async () => {
+        const trimmedTitle = title.trim() || 'Untitled';
+        const contentToSave = contentRef.current;
+        setIsSaving(true);
+        try {
+            if (isNewNote) {
+                const newNote = await createNote({
+                    title: trimmedTitle,
+                    content: contentToSave,
+                    is_public: isPublic,
+                    folder_id: folderId,
+                });
+                if (newNote) {
+                    setNote(newNote);
+                    setIsPublic(newNote.is_public || false);
+                    router.replace(`/notes/${newNote.id}`);
+                    notifications.show({
+                        title: 'Note created',
+                        message: 'Your note has been saved.',
+                        color: 'green',
                     });
-                    if (newNote) {
-                        setNote(newNote);
-                        setIsPublic(newNote.is_public || false);
-                        lastSavedDataRef.current = JSON.stringify(newNote.content);
-                        isNewNoteRef.current = false;
-                        router.replace(`/notes/${newNote.id}`);
-                    }
                 } else {
-                    const updatedNote = await updateNote(id, {
-                        title,
-                        content: data,
+                    notifications.show({
+                        title: 'Error',
+                        message: 'Failed to save the note.',
+                        color: 'red',
                     });
-                    if (updatedNote) {
-                        setNote(updatedNote);
-                        lastSavedDataRef.current = JSON.stringify(updatedNote.content);
-                    }
                 }
-            } finally {
-                setIsSaving(false);
+            } else {
+                const updatedNote = await updateNote(id, {
+                    title: trimmedTitle,
+                    content: contentToSave,
+                    is_public: isPublic,
+                    folder_id: folderId,
+                });
+                if (updatedNote) {
+                    setNote(updatedNote);
+                    setIsPublic(updatedNote.is_public || false);
+                    notifications.show({
+                        title: 'Saved',
+                        message: 'Your note has been saved.',
+                        color: 'green',
+                    });
+                } else {
+                    notifications.show({
+                        title: 'Error',
+                        message: 'Failed to save the note.',
+                        color: 'red',
+                    });
+                }
             }
-        }, 5000); // Reduced from 5000ms to 2000ms
-    }, [id, router]);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     if (isLoading) {
         return (
-            <div className="min-h-screen p-4">
-                <div className="max-w-4xl mx-auto">
+            <div className="min-h-screen p-3 sm:p-4">
+                <div className="max-w-4xl mx-auto px-0 sm:px-2">
+                    <CustomGroup gap="md" mb="xl">
+                        <BackButton />
+                        <Skeleton height={36} width={120} radius="sm" />
+                    </CustomGroup>
                     <div className="mb-8">
                         <Skeleton height={40} width="40%" radius="sm" mb="md" />
                         <Skeleton height={32} width="20%" radius="sm" />
@@ -119,59 +153,55 @@ export default function NotePage() {
     }
 
     return (
-        <div className="min-h-screen p-4">
-            <div className="max-w-4xl mx-auto">
-                <CustomGroup justify="space-between" mb="xl">
-                    <CustomGroup gap="md" align="center">
+        <div className="min-h-screen p-3 sm:p-4">
+            <div className="max-w-4xl mx-auto px-0 sm:px-2">
+                <CustomGroup justify="space-between" gap="sm" wrap="wrap" mb="md">
+                    <CustomGroup gap="sm" align="center" wrap="wrap">
+                        <BackButton />  
                         <CustomTitle order={1}>Notepad</CustomTitle>
-                        {isSaving && (
-                            <div className="fixed bottom-5 right-5 animate-spin">
-                                <IconLoader2 size={20} />
-                            </div>
-
-                        )}
                     </CustomGroup>
-                    <CustomGroup gap="md">
-                        {user && note && (
-                            <>
-                                <CustomCheckbox
-                                    label="Public"
-                                    checked={isPublic}
-                                    onChange={async (e) => {
-                                        const newIsPublic = e.currentTarget.checked;
-                                        setIsPublic(newIsPublic);
-                                        const updatedNote = await updateNote(id, {
-                                            is_public: newIsPublic,
-                                        });
-                                        if (updatedNote) {
-                                            setNote(updatedNote);
-                                        }
-                                    }}
-                                />
-                                {isPublic && (
-                                    <CustomButton
-                                        variant="subtle"
-                                        size="xs"
-                                        leftSection={<IconLink size={14} />}
-                                        onClick={async () => {
-                                            const publicUrl = `${window.location.origin}/public/${id}`;
-                                            await navigator.clipboard.writeText(publicUrl);
-                                            notifications.show({
-                                                title: 'Link copied',
-                                                message: 'Public link has been copied to clipboard!',
-                                                color: 'green',
-                                            });
-                                        }}
-                                    >
-                                        Copy Link
-                                    </CustomButton>
-                                )}
-                            </>
-                        )}
+                    <CustomGroup gap="sm" wrap="wrap">
                         {user && (
-                            <CustomButton variant="subtle" onClick={signOut}>
-                                Sign Out
-                            </CustomButton>
+                            <>
+                                <CustomButton
+                                    size="sm"
+                                    leftSection={<IconDeviceFloppy size={18} />}
+                                    onClick={handleSave}
+                                    loading={isSaving}
+                                >
+                                    Save
+                                </CustomButton>
+                                {(note || isNewNote) && (
+                                    <>
+                                        <CustomCheckbox
+                                            label="Public"
+                                            checked={isPublic}
+                                            onChange={(e) => setIsPublic(e.currentTarget.checked)}
+                                        />
+                                        {isPublic && note && (
+                                            <CustomButton
+                                                variant="subtle"
+                                                size="xs"
+                                                leftSection={<IconLink size={14} />}
+                                                onClick={async () => {
+                                                    const publicUrl = `${window.location.origin}/public/${id}`;
+                                                    await navigator.clipboard.writeText(publicUrl);
+                                                    notifications.show({
+                                                        title: 'Link copied',
+                                                        message: 'Public link has been copied to clipboard!',
+                                                        color: 'green',
+                                                    });
+                                                }}
+                                            >
+                                                Copy Link
+                                            </CustomButton>
+                                        )}
+                                    </>
+                                )}
+                                <CustomButton variant="subtle" onClick={signOut}>
+                                    Sign Out
+                                </CustomButton>
+                            </>
                         )}
                         <ThemeToggle />
                     </CustomGroup>
@@ -185,12 +215,44 @@ export default function NotePage() {
                     </CustomPaper>
                 )}
 
-                <NoteEditor
-                    key={id}
-                    initialData={initialData}
-                    onChange={handleChange}
-                    readOnly={note?.is_public && !user}
-                />
+                {user && (
+                    <CustomStack gap="md" mb="md">
+                        <CustomTextInput
+                            placeholder="Note title"
+                            value={title}
+                            onChange={(e) => setTitle(e.currentTarget.value)}
+                            size="md"
+                        />
+                        <Select
+                            label="Folder"
+                            placeholder="Select folder"
+                            clearable
+                            data={folders.map((f) => ({ value: f.id, label: f.name }))}
+                            value={folderId}
+                            onChange={(v) => setFolderId(v)}
+                        />
+                        <NoteEditor
+                            key={id}
+                            initialData={initialContent}
+                            onChange={handleEditorChange}
+                            readOnly={false}
+                        />
+                    </CustomStack>
+                )}
+
+                {!user && note && (
+                    <CustomStack gap="md">
+                        <CustomText size="xl" fw={600}>
+                            {title || 'Untitled'}
+                        </CustomText>
+                        <NoteEditor
+                            key={id}
+                            initialData={initialContent}
+                            onChange={() => { }}
+                            readOnly={true}
+                        />
+                    </CustomStack>
+                )}
             </div>
         </div>
     );
