@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { CustomButton, CustomGroup, CustomTitle, ThemeToggle, CustomPaper, CustomStack } from '@/components/ui';
 import { useMediaQuery } from '@mantine/hooks';
 import { Skeleton, Drawer } from '@mantine/core';
@@ -7,7 +8,7 @@ import { IconPlus, IconMenu2 } from '@tabler/icons-react';
 import { FoldersSidebar, NoteCard, NotesPageModals } from '@/components/home';
 import { useNotesPage } from '@/hooks/useNotesPage';
 
-export default function Home() {
+function HomeContent() {
   const isMobile = useMediaQuery('(max-width: 639px)');
   const { notes, folders, selectedFolderId, notesLoading, foldersLoading, foldersDrawerOpen,
     createFolderOpen, renameFolderOpen, deleteFolderOpen, deleteModalOpen,
@@ -120,5 +121,28 @@ export default function Home() {
         onCloseDeleteNote={closeDeleteNote}
       />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen p-3 sm:p-4">
+        <div className="max-w-5xl mx-auto">
+          <CustomStack gap="sm">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <CustomPaper key={i} p="md" shadow="xs" withBorder>
+                <CustomStack gap="xs">
+                  <Skeleton height={20} width="60%" radius="sm" />
+                  <Skeleton height={16} width="30%" radius="sm" />
+                </CustomStack>
+              </CustomPaper>
+            ))}
+          </CustomStack>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
