@@ -10,7 +10,7 @@ export function BackButton() {
         <CustomButton
             variant="subtle"
             leftSection={<IconArrowLeft size={18} />}
-            onClick={() => router.push('/')}
+            onClick={() => router.back()}
         >
             Back
         </CustomButton>

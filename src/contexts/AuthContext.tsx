@@ -47,7 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         const isAuthPage = pathname === '/auth';
         const isPublicRoute = pathname.startsWith('/public');
-        const isProtectedRoute = (pathname.startsWith('/notes') || pathname === '/') && !isPublicRoute;
+        const isProtectedRoute = (pathname.startsWith('/files') || pathname.startsWith('/view') || pathname.startsWith('/notes') || pathname === '/') && !isPublicRoute;
 
         // If user is authenticated and on auth page, redirect to home
         if (user && isAuthPage) {

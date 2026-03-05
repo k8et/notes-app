@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Notepad - Your Notes App",
-  description: "Create, edit, and share your notes with a beautiful rich text editor",
+  title: "Проводник - Файлы и папки",
+  description: "Создавайте папки, загружайте файлы и редактируйте текстовые документы",
 };
 
 export const viewport = {
